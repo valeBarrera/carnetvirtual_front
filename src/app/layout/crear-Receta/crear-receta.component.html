@@ -1,0 +1,95 @@
+<div [@routerTransition]>
+    <app-page-header [heading]="'Registrar Receta a Paciente'" [icon]="'fa-edit'"></app-page-header>
+    <div class="row" *ngIf="paciente != null">
+        <div class="col">
+            <button class="btn btn-primary" (click)="buscarOtro()">Buscar Otro Paciente</button>
+        </div>
+    </div>
+    <div class="row" *ngIf="paciente == null">
+        <div class="col">
+            <button class="btn btn-primary" (click)="changeStateReader()">{{isReaderEnable ? 'Desactivar Lector':'Activar Lector'}}</button>
+        </div>
+    </div>
+    <br />
+    <div class="row" *ngIf="!isReaderEnable && paciente == null">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    <b>Buscar por RUN</b>
+                </div>
+                <div class="card-body">
+                    <form [formGroup]="buscar" (submit)="onSubmit()">
+                        <div class="form-group">
+                            <label for="run">RUN</label>
+                            <input placeholder="Ingrese su RUN sin puntos ni digito verificador" formControlName="run" id="run" class="form-control input-underline input-lg" type="text" />
+                            <mat-error *ngIf="((buscar.controls.run.touched && buscar.controls.run.errors) || (buscar.controls.run.errors && submit))">
+                                <span *ngIf="buscar.controls.run.errors.required">Este campo es obligatorio.</span>
+                                <span *ngIf="buscar.controls.run.errors.pattern">Este campo sólo acepta números y, entre 7 y 8 dígitos.</span>
+                            </mat-error>
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-primary form-control " type="submit">Buscar Paciente</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div *ngIf="hasError" class="alert alert-warning alert-dismissible" style="margin: 20px;" role="alert">
+                <h6 class="alert-heading">Ha ocurrido un problema!</h6>
+                <hr>
+                <p class="mb-0">{{infoError}}</p>
+
+                <button type="button" class="btn btn-warning" style="color: #faeecb; margin-top: 10px;" (click)="hasError = false;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+    <div *ngIf="success" class="alert alert-success alert-dismissible" role="alert">
+        <h6 class="alert-heading">Todo ha salido bien!</h6>
+        <hr>
+        <p class="mb-0">{{info}}</p>
+        <button type="button" class="btn btn-success" style="color: #d8f5df; margin-top: 10px;" (click)="success = false;">Cerrar</button>
+    </div>
+    <br/>
+    <app-lector-qr *ngIf="isReaderEnable" [scannerEnabled]="isReaderEnable" (usuarioId)="onRead($event)"></app-lector-qr>
+    <app-data-paciente *ngIf="paciente != null" [paciente]="paciente"></app-data-paciente>
+    <div class="row" *ngIf="paciente != null">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    <b>Registrar Receta a Paciente</b>
+                </div>
+                <div class="card-body">
+                    <form [formGroup]="recetaForm">
+                        <div class="form-group">
+                            <label for="prescripcion">Prescripción</label>
+                            <input placeholder="Ingrese el medicamento y la posología a prescribir" formControlName="prescripcion" id="prescripcion" class="form-control input-underline input-lg" type="text" />
+                            <mat-error *ngIf="((recetaForm.controls.prescripcion.touched && recetaForm.controls.prescripcion.errors) || (recetaForm.controls.prescripcion.errors && submitRegistro))">
+                                <span *ngIf="recetaForm.controls.prescripcion.errors.required">Este campo es obligatorio.</span>
+                            </mat-error>
+                        </div>
+                        <div class="form-group">
+                            <label for="indicaciones">Indicaciones</label>
+                            <textarea placeholder="Describa las indicaciones para el medicamento" formControlName="indicaciones" id="indicaciones" class="form-control input-underline input-lg"></textarea>
+                            <mat-error *ngIf="((recetaForm.controls.indicaciones.touched && recetaForm.controls.indicaciones.errors) || (recetaForm.controls.indicaciones.errors && submitRegistro))">
+                                <span *ngIf="recetaForm.controls.indicaciones.errors.required">Este campo es obligatorio.</span>
+                            </mat-error>
+                        </div>
+                        <div class="form-group">
+                            <label for="estado">Estado de la Prescripción</label>
+                            <select formControlName="estado" id="estado" class="form-control input-underline input-lg">
+                                <option *ngFor="let est of estados" [value]="est">{{est}}</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-primary form-control" (click)="onSubmitRegistro()">Registrar Receta</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

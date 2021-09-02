@@ -1,0 +1,143 @@
+<nav [ngClass]="{ sidebarPushRight: isActive, collapsed: collapsed }" class="sidebar">
+    <div class="list-group">
+        <div>
+            <a class="list-group-item" [routerLink]="['/dashboard']">
+                <i class="fa fa-home"></i>&nbsp;
+                <span>{{'Dashboard' | translate}}</span>
+            </a>
+        </div>
+        <div class="nested-menu">
+            <a (click)="addExpandClass('usuarios')"  [routerLink]="['/gestion-usuarios']" class="list-group-item" *ngIf="authenticationService.getRole().id == ROL_MESON" >
+                <i class="fa fa-users"></i>&nbsp;
+                <span>{{'Gestión de Usuarios' | translate}}</span>
+            </a>
+            <li [class.expand]="showMenu === 'usuarios'" class="nested">
+                <ul class="submenu">
+                    <li *ngIf="authenticationService.getRole().cargo == 'Administrador'">
+                        <a href="javascript:void(0)" [routerLink]="['/gestion-usuarios/crear-paciente']">
+                            <i class="fa fa-user"></i>&nbsp;
+                            <span>{{'Crear Usuario Paciente' | translate}}</span>
+                        </a>
+                    </li>
+                    <li *ngIf="authenticationService.getRole().cargo == 'Administrador'">
+                        <a href="javascript:void(0)" [routerLink]="['/gestion-usuarios/crear-meson']">
+                            <i class="fa fa-user"></i>&nbsp;
+                            <span>{{'Crear Usuario Mesón' | translate}}</span>
+                        </a>
+                    </li>
+                    <li *ngIf="authenticationService.getRole().cargo == 'Administrador'">
+                        <a href="javascript:void(0)" [routerLink]="['/gestion-usuarios/crear-farmacia']">
+                            <i class="fa fa-user"></i>&nbsp;
+                            <span>{{'Crear Usuario Farmacia' | translate}}</span>
+                        </a>
+                    </li>
+                    <li *ngIf="authenticationService.getRole().cargo == 'Administrador'">
+                        <a href="javascript:void(0)" [routerLink]="['/gestion-usuarios/crear-medico']">
+                            <i class="fa fa-user"></i>&nbsp;
+                            <span>{{'Crear Usuario Médico' | translate}}</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="javascript:void(0)" [routerLink]="['/gestion-usuarios/listar']">
+                            <i class="fa fa-user"></i>&nbsp;
+                            <span>{{'Listar Usuario' | translate}}</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+        </div>
+
+        <div class="nested-menu">
+            <a (click)="addExpandClass('farmacia')"  [routerLink]="['/gestion-farmacia']" class="list-group-item" *ngIf="authenticationService.getRole().id == ROL_MEDICO || authenticationService.getRole().id == ROL_FARMACIA" >
+                <i class="fa fa-users"></i>&nbsp;
+                <span>{{'Gestión de Farmacia' | translate}}</span>
+            </a>
+            <li [class.expand]="showMenu === 'farmacia'" class="nested">
+                <ul class="submenu">
+
+                    <li>
+                        <a href="javascript:void(0)" [routerLink]="['/gestion-farmacia/obtener-receta']">
+                            <i class="fa fa-user"></i>&nbsp;
+                            <span>{{'Obtener Recetas Paciente' | translate}}</span>
+                        </a>
+                    </li>
+                    <li *ngIf="authenticationService.getRole().id == ROL_MEDICO">
+                        <a href="javascript:void(0)" [routerLink]="['/gestion-farmacia/registrar-receta']">
+                            <i class="fa fa-user"></i>&nbsp;
+                            <span>{{'Registrar Receta' | translate}}</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+        </div>
+
+        <div class="nested-menu">
+            <a (click)="addExpandClass('cita')"  [routerLink]="['/gestion-cita']" class="list-group-item" *ngIf="authenticationService.getRole().id == ROL_MEDICO || authenticationService.getRole().id == ROL_MESON" >
+                <i class="fa fa-users"></i>&nbsp;
+                <span>{{'Gestión de Citas Médicas' | translate}}</span>
+            </a>
+            <li [class.expand]="showMenu === 'cita'" class="nested">
+                <ul class="submenu">
+                    <li>
+                        <a href="javascript:void(0)" [routerLink]="['/gestion-cita/obtener-cita']">
+                            <i class="fa fa-user"></i>&nbsp;
+                            <span>{{'Obtener Citas de Paciente' | translate}}</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="javascript:void(0)" [routerLink]="['/gestion-cita/registrar-cita']">
+                            <i class="fa fa-user"></i>&nbsp;
+                            <span>{{'Registrar Cita de Paciente' | translate}}</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+        </div>
+
+        <div class="nested-menu">
+            <a (click)="addExpandClass('incidencia')"  [routerLink]="['/gestion-incidencia']" class="list-group-item" *ngIf="authenticationService.getRole().id == ROL_MESON" >
+                <i class="fa fa-users"></i>&nbsp;
+                <span>{{'Gestión de Incidencias' | translate}}</span>
+            </a>
+            <li [class.expand]="showMenu === 'incidencia'" class="nested">
+                <ul class="submenu">
+                    <li>
+                        <a href="javascript:void(0)" [routerLink]="['/gestion-incidencia/obtener-incidencia']">
+                            <i class="fa fa-user"></i>&nbsp;
+                            <span>{{'Obtener Incidencias' | translate}}</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="javascript:void(0)" [routerLink]="['/gestion-incidencia/registrar-incidencia']">
+                            <i class="fa fa-user"></i>&nbsp;
+                            <span>{{'Registrar Incidencia' | translate}}</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+        </div>
+
+
+        <div class="header-fields">
+            <div class="nested-menu">
+                <a (click)="addExpandClass('profile')" class="list-group-item">
+                    <span><i class="fa fa-user"></i>&nbsp; {{nombreCompleto}} ({{rol}})</span>
+                </a>
+                <li [class.expand]="showMenu === 'profile'" class="nested">
+                    <ul class="submenu">
+
+                        <li>
+                            <a (click)="onLoggedout()" [routerLink]="['/login']">
+                                <span><i class="fa fa-fw fa-power-off"></i> {{ 'Log Out' | translate }}</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </div>
+        </div>
+    </div>
+    <div (click)="toggleCollapsed()" [ngClass]="{ collapsed: collapsed }" class="toggle-button">
+        <i class="fa fa-fw fa-angle-double-{{ collapsed ? 'right' : 'left' }}"></i>&nbsp;
+        <span>{{ 'Collapse Sidebar' | translate }}</span>
+    </div>
+</nav>

@@ -1,0 +1,37 @@
+<div [@routerTransition] class="login-page">
+    <div class="row justify-content-md-center">
+        <div class="col-md-6">
+            <img class="user-avatar" src="assets/images/icon_usuario.png" width="150px" />
+            <h1>Carnet Virtual</h1>
+            <form role="form" [formGroup]="loginForm" (submit)="onLoggedin()">
+                <div class="form-content">
+                    <div class="form-group">
+                        <input formControlName="username" [placeholder]="'Nombre de Usuario' | translate" class="form-control input-underline input-lg" type="text" />
+                        <mat-error *ngIf="(loginForm.controls.username.touched && submit)  || (loginForm.controls.username.invalid && submit)">
+                            <span *ngIf="loginForm.controls.username.errors.required">Este campo es obligatorio.</span>
+                        </mat-error>
+                    </div>
+
+                    <div class="form-group">
+                        <input formControlName="password" [placeholder]="'Password' | translate" class="form-control input-underline input-lg" type="password" />
+                        <mat-error *ngIf="(loginForm.controls.password.touched && submit) || (loginForm.controls.password.invalid && submit)">
+                            <span *ngIf="loginForm.controls.password.errors.required">Este campo es obligatorio.</span>
+                        </mat-error>
+                    </div>
+                </div>
+                <mat-error *ngIf="error">
+                    <span>{{info}}</span>
+                </mat-error>
+                <br/>
+                <button style="margin-top: 20px;" type="submit" class="btn rounded-btn">{{
+                    'Ingresar' | translate
+                }}</button> &nbsp;
+            </form>
+
+            <div style="margin-top: 120px;">
+                <img src="assets/images/ssn.png" width="100px" />
+                <p>Una Prototipo de Sistema para <br/>Consultorio de Especialidades.</p>
+            </div>
+        </div>
+    </div>
+</div>

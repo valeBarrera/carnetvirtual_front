@@ -1,0 +1,551 @@
+<div [@routerTransition]>
+    <app-page-header [heading]="'Lista de Usuarios'" [icon]="'fa-edit'"></app-page-header>
+     <div class="row">
+        <div class="col">
+            <div *ngIf="hasError" class="alert alert-warning alert-dismissible" style="margin: 20px;" role="alert">
+                <h6 class="alert-heading">Ha ocurrido un problema!</h6>
+                <hr>
+                <p class="mb-0">{{infoError}}</p>
+
+                <button type="button" class="btn btn-warning" style="margin-top: 10px;" (click)="hasError = false;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div *ngIf="success" class="alert alert-success alert-dismissible" role="alert">
+                <h6 class="alert-heading">Todo ha salido bien!</h6>
+                <hr>
+                <p class="mb-0">{{info}}</p>
+                <button type="button" class="btn btn-success" style="color: #d8f5df; margin-top: 10px;" (click)="success = false;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+    <br *ngIf="usuarios.length > 0" />
+    <div class="row" *ngIf="usuarios.length > 0">
+        <div class="col">
+            <div class="card mb-3">
+                <div class="card-header">
+                    Listado de Usuarios
+                </div>
+                <div class="card-body table-responsive">
+                    <table datatable [dtOptions]="dtOptions" class="table table-striped table-bordered row-border hover" class="table">
+                        <thead>
+                            <tr>
+                                <th>RUN</th>
+                                <th>Nombres</th>
+                                <th>Apellidos</th>
+                                <th>Rol</th>
+                                <th>Especialidad/Cargo</th>
+                                <th>Email</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let usuario of usuarios">
+                                <th scope="row">{{getRUN(usuario)}}</th>
+                                <td>{{getNombres(usuario)}}</td>
+                                <td>{{getApellidos(usuario)}}</td>
+                                <td>{{usuario.rol.nombre.toUpperCase()}}</td>
+                                <td>{{getEspecialidadOrCargo(usuario).toUpperCase()}}</td>
+                                <td>{{usuario.email}}</td>
+                                <td>
+                                    <button style="margin-right: 4px; margin-left: 4px; margin-bottom: 2px;" *ngIf="currentAuthUser.meson?.cargo == 'Administrador' && usuario.rol_id == ROL_PACIENTE" type="button" class="btn btn-warning" (click)="initModificarPaciente(usuario, modPaciente)">Modificar Datos</button>
+                                    <button style="margin-right: 4px; margin-left: 4px; margin-bottom: 2px;" *ngIf="currentAuthUser.meson?.cargo == 'Administrador' && usuario.rol_id == ROL_MESON" type="button" class="btn btn-warning" (click)="initModificarMeson(usuario, modMeson)">Modificar Datos</button>
+                                    <button style="margin-right: 4px; margin-left: 4px; margin-bottom: 2px;" *ngIf="currentAuthUser.meson?.cargo == 'Administrador' && usuario.rol_id == ROL_FARMACIA" type="button" class="btn btn-warning" (click)="initModificarFarmacia(usuario, modFarmacia)">Modificar Datos</button>
+                                    <button style="margin-right: 4px; margin-left: 4px; margin-bottom: 2px;" *ngIf="currentAuthUser.meson?.cargo == 'Administrador' && usuario.rol_id == ROL_MEDICO" type="button" class="btn btn-warning" (click)="initModificarMedico(usuario, modMedico)">Modificar Datos</button>
+                                    <button style="margin-right: 4px; margin-left: 4px; margin-bottom: 2px;" type="button" class="btn btn-success" (click)="initResetPass(usuario, resetPass)">Restablecer Contraseña</button>
+                                    <button style="margin-right: 4px; margin-left: 4px; margin-bottom: 2px;" *ngIf="usuario.rol_id == ROL_PACIENTE" type="button" class="btn btn-info" (click)="initQRCard(usuario, qrCard)">Generar Tarjeta</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<ng-template #resetPass let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title" id="modalRecetaLabel">Restablecer Contraseña</h5>
+        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close" (click)="modal.dismiss('Cross click')">&times;</button>
+    </div>
+    <div class="modal-body">
+        <p>¿Realmente desea Restablecer la contraseña de <b>{{getNombres(usuario)}} {{getApellidos(usuario)}}</b> con rol <b>{{usuario.rol.nombre}}</b>?</p>
+        <br/>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="modal.dismiss('Cross click')">Cerrar</button>
+        <button type="button" class="btn btn-primary" (click)="resetPassSubmit()">Restablecer</button>
+    </div>
+</ng-template>
+
+<ng-template #modPaciente let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title" id="modalRecetaLabel">Modificar Paciente</h5>
+        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close" (click)="modal.dismiss('Cross click')">&times;</button>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-12">
+                <form role="form" [formGroup]="modificarPacienteForm">
+                    <div class="form-group">
+                        <label for="run">RUN</label>
+                        <input placeholder="Ingrese su RUN sin puntos ni digito verificador" formControlName="run" id="run" class="form-control input-underline input-lg" type="text" />
+                        <mat-error *ngIf="((modificarPacienteForm.controls.run.touched && modificarPacienteForm.controls.run.errors) || (modificarPacienteForm.controls.run.errors && submitPaciente))">
+                            <span *ngIf="modificarPacienteForm.controls.run.errors.required">Este campo es obligatorio.</span>
+                            <span *ngIf="modificarPacienteForm.controls.run.errors.pattern">Este campo sólo acepta números y, entre 7 y 8 dígitos.</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="nombres">Nombres</label>
+                        <input formControlName="nombres" id="nombres" placeholder="Ingrese su o sus nombres" class="form-control input-underline input-lg" type="text" />
+                        <mat-error *ngIf="(modificarPacienteForm.controls.nombres.touched && modificarPacienteForm.controls.nombres.errors) ||
+                                (modificarPacienteForm.controls.nombres.errors && submitPaciente)">
+                            <span *ngIf="modificarPacienteForm.controls.nombres.errors.required">Este campo es obligatorio.</span>
+                            <span *ngIf="modificarPacienteForm.controls.nombres.errors.maxLength">Este campo supera la cantidad de caracteres máximos (60).</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="apellidos">Apellidos</label>
+                        <input formControlName="apellidos" id="apellidos" placeholder="Ingrese sus apellidos" class="form-control input-underline input-lg" type="text" />
+                        <mat-error *ngIf="(modificarPacienteForm.controls.apellidos.touched && modificarPacienteForm.controls.apellidos.errors) ||
+                                (modificarPacienteForm.controls.apellidos.errors && submitPaciente)">
+                            <span *ngIf="modificarPacienteForm.controls.apellidos.errors.required">Este campo es obligatorio.</span>
+                            <span *ngIf="modificarPacienteForm.controls.apellidos.errors.maxLength">Este campo supera la cantidad de caracteres máximos (60).</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="fecha_nacimiento">Fecha de Nacimiento</label>
+                        <input #fecha_nac_pac (change)="modificarPacienteForm.controls.fecha_nacimiento.setValue(fecha_nac_pac.value)" class="form-control input-underline input-lg" type="date" [value]="fecha_nac_pac_val"/>
+                        <input formControlName="fecha_nacimiento" [value]="fecha_nac_pac.value"  class="form-control input-underline input-lg" type="hidden" />
+                        <mat-error *ngIf="(modificarPacienteForm.controls.fecha_nacimiento.touched && modificarPacienteForm.controls.fecha_nacimiento.errors ) ||
+                                (modificarPacienteForm.controls.fecha_nacimiento.errors && submitPaciente)">
+                            <span *ngIf="modificarPacienteForm.controls.fecha_nacimiento.errors.required">Este campo es obligatorio.</span>
+                            <span *ngIf="modificarPacienteForm.controls.fecha_nacimiento.errors.maxLength">Este campo supera la cantidad de caracteres máximos (12).</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="telefono">Teléfono</label>
+                        <input placeholder="Ingrese su número de teléfono" formControlName="telefono" id="telefono" class="form-control input-underline input-lg" type="text" />
+                        <mat-error *ngIf="(modificarPacienteForm.controls.telefono.touched && modificarPacienteForm.controls.telefono.errors) ||
+                                (modificarPacienteForm.controls.telefono.errors && submitPaciente)">
+                            <span *ngIf="modificarPacienteForm.controls.telefono.errors.required">Este campo es obligatorio.</span>
+                            <span *ngIf="modificarPacienteForm.controls.telefono.errors.pattern">Este campo sólo acepta números y como máximo 8 dígitos.</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input formControlName="email" id="email" placeholder="Ingrese su correo electrónico" class="form-control input-underline input-lg" type="email" />
+                        <mat-error *ngIf="(modificarPacienteForm.controls.email.touched && modificarPacienteForm.controls.email.errors) ||
+                                (modificarPacienteForm.controls.email.errors && submitPaciente)">
+                            <span *ngIf="modificarPacienteForm.controls.email.errors.required">Este campo es obligatorio.</span>
+                            <span *ngIf="modificarPacienteForm.controls.email.errors.email">Este campo es inválido.</span>
+                        </mat-error>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="username">Nombre de Usuario</label>
+                        <input formControlName="username" id="username" placeholder="Ingrese su nombre de usuario" class="form-control input-underline input-lg" type="text" />
+                        <mat-error *ngIf="(modificarPacienteForm.controls.username.touched && modificarPacienteForm.controls.username.errors) ||
+                                (modificarPacienteForm.controls.username.errors && submitPaciente)">
+                            <span *ngIf="modificarPacienteForm.controls.username.errors.required">Este campo es obligatorio.</span>
+                            <span *ngIf="modificarPacienteForm.controls.username.errors.maxLength">Este campo supera la cantidad de caracteres máximos (12).</span>
+                        </mat-error>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="modal.dismiss('Cross click')">Cerrar</button>
+        <button type="button" class="btn btn-primary" (click)="modificarPacienteSubmit()">Guardar Cambios</button>
+    </div>
+</ng-template>
+
+<ng-template #modMeson let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title" id="modalRecetaLabel">Modificar Meson</h5>
+        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close" (click)="modal.dismiss('Cross click')">&times;</button>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-12">
+                <form role="form" [formGroup]="modificarMesonForm">
+                    <div class="form-group">
+                        <label for="run">RUN</label>
+                        <input placeholder="Ingrese su RUN sin puntos ni digito verificador"
+                            formControlName="run"
+                            id="run"
+                            class="form-control input-underline input-lg"
+                            type="text"/>
+                        <mat-error *ngIf="((modificarMesonForm.controls.run.touched && modificarMesonForm.controls.run.errors) || (modificarMesonForm.controls.run.errors && submitMeson))">
+                            <span *ngIf="modificarMesonForm.controls.run.errors.required"
+                                >Este campo es obligatorio.</span>
+                            <span *ngIf="modificarMesonForm.controls.run.errors.pattern">Este campo sólo acepta números y, entre 7 y 8 dígitos.</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="nombres">Nombres</label>
+                        <input formControlName="nombres"
+                            id="nombres"
+                            placeholder="Ingrese su o sus nombres"
+                            class="form-control input-underline input-lg"
+                            type="text"/>
+                        <mat-error *ngIf="(modificarMesonForm.controls.nombres.touched && modificarMesonForm.controls.nombres.errors) ||
+                                (modificarMesonForm.controls.nombres.errors && submitMeson)">
+                            <span *ngIf="modificarMesonForm.controls.nombres.errors.required"
+                                >Este campo es obligatorio.</span>
+                            <span *ngIf="modificarMesonForm.controls.nombres.errors.maxLength">Este campo supera la cantidad de caracteres máximos (60).</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="apellidos">Apellidos</label>
+                        <input formControlName="apellidos"
+                            id="apellidos"
+                            placeholder="Ingrese sus apellidos"
+                            class="form-control input-underline input-lg"
+                            type="text"/>
+                            <mat-error *ngIf="(modificarMesonForm.controls.apellidos.touched && modificarMesonForm.controls.apellidos.errors) ||
+                                (modificarMesonForm.controls.apellidos.errors && submitMeson)">
+                            <span *ngIf="modificarMesonForm.controls.apellidos.errors.required"
+                                >Este campo es obligatorio.</span>
+                            <span *ngIf="modificarMesonForm.controls.apellidos.errors.maxLength">Este campo supera la cantidad de caracteres máximos (60).</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="fecha_nacimiento">Fecha de Nacimiento</label>
+                        <input #fecha_nac_mes
+                            (change)="modificarMesonForm.controls.fecha_nacimiento.setValue(fecha_nac_mes.value)"
+                            class="form-control input-underline input-lg"
+                            [value]="fecha_nac_mes_val"
+                            type="date"/>
+                        <input formControlName="fecha_nacimiento"
+                            [value]="fecha_nac_mes.value"
+                            id="fecha_nacimiento"
+                            class="form-control input-underline input-lg"
+                            type="hidden"/>
+                        <mat-error *ngIf="(modificarMesonForm.controls.fecha_nacimiento.touched && modificarMesonForm.controls.fecha_nacimiento.errors ) ||
+                                (modificarMesonForm.controls.fecha_nacimiento.errors && submitMeson)">
+                            <span *ngIf="modificarMesonForm.controls.fecha_nacimiento.errors.required"
+                                >Este campo es obligatorio.</span>
+                            <span *ngIf="modificarMesonForm.controls.fecha_nacimiento.errors.maxLength">Este campo supera la cantidad de caracteres máximos (12).</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="telefono">Teléfono</label>
+                        <input placeholder="Ingrese su número de teléfono"
+                            formControlName="telefono"
+                            id="telefono"
+                            class="form-control input-underline input-lg"
+                            type="text"/>
+                        <mat-error *ngIf="(modificarMesonForm.controls.telefono.touched && modificarMesonForm.controls.telefono.errors) ||
+                                (modificarMesonForm.controls.telefono.errors && submitMeson)">
+                            <span *ngIf="modificarMesonForm.controls.telefono.errors.required"
+                                >Este campo es obligatorio.</span>
+                            <span *ngIf="modificarMesonForm.controls.telefono.errors.pattern">Este campo sólo acepta números y como máximo 8 dígitos.</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input formControlName="email"
+                            id="email"
+                            placeholder="Ingrese su correo electrónico"
+                            class="form-control input-underline input-lg"
+                            type="email"/>
+                        <mat-error *ngIf="(modificarMesonForm.controls.email.touched && modificarMesonForm.controls.email.errors) ||
+                                (modificarMesonForm.controls.email.errors && submitMeson)">
+                            <span *ngIf="modificarMesonForm.controls.email.errors.required"
+                                >Este campo es obligatorio.</span>
+                            <span *ngIf="modificarMesonForm.controls.email.errors.email">Este campo es inválido.</span>
+                        </mat-error>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="username">Nombre de Usuario</label>
+                        <input formControlName="username"
+                            id="username"
+                            placeholder="Ingrese su nombre de usuario"
+                            class="form-control input-underline input-lg"
+                            type="text"/>
+                        <mat-error *ngIf="(modificarMesonForm.controls.username.touched && modificarMesonForm.controls.username.errors) ||
+                                (modificarMesonForm.controls.username.errors && submitMeson)">
+                            <span *ngIf="modificarMesonForm.controls.username.errors.required"
+                                >Este campo es obligatorio.</span>
+                            <span *ngIf="modificarMesonForm.controls.username.errors.maxLength">Este campo supera la cantidad de caracteres máximos (12).</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="cargo">Cargo</label>
+                        <select formControlName="cargo"
+                            id="cargo"
+                            class="form-control input-underline input-lg">
+                            <option *ngFor="let cargo of cargosMeson" [value]="cargo">{{cargo}}</option>
+                        </select>
+                        <mat-error *ngIf="(modificarMesonForm.controls.cargo.touched && modificarMesonForm.controls.cargo.errors) ||
+                                (modificarMesonForm.controls.cargo.errors && submitMeson)">
+                            <span *ngIf="modificarMesonForm.controls.cargo.errors.required"
+                                >Este campo es obligatorio.</span>
+                            <span *ngIf="modificarMesonForm.controls.cargo.errors.maxLength">Este campo supera la cantidad de caracteres máximos (12).</span>
+                        </mat-error>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="modal.dismiss('Cross click')">Cerrar</button>
+        <button type="button" class="btn btn-primary" (click)="modificarMesonSubmit()">Guardar Cambios</button>
+    </div>
+</ng-template>
+
+<ng-template #modFarmacia let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title" id="modalRecetaLabel">Modificar Farmacia</h5>
+        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close" (click)="modal.dismiss('Cross click')">&times;</button>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-12">
+                <form role="form" [formGroup]="modificarFarmaciaForm">
+                    <div class="form-group">
+                        <label for="run">RUN</label>
+                        <input placeholder="Ingrese su RUN sin puntos ni digito verificador" formControlName="run" id="run" class="form-control input-underline input-lg" type="text" />
+                        <mat-error *ngIf="((modificarFarmaciaForm.controls.run.touched && modificarFarmaciaForm.controls.run.errors) || (modificarFarmaciaForm.controls.run.errors && submitFarmacia))">
+                            <span *ngIf="modificarFarmaciaForm.controls.run.errors.required">Este campo es obligatorio.</span>
+                            <span *ngIf="modificarFarmaciaForm.controls.run.errors.pattern">Este campo sólo acepta números y, entre 7 y 8 dígitos.</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="nombres">Nombres</label>
+                        <input formControlName="nombres" id="nombres" placeholder="Ingrese su o sus nombres" class="form-control input-underline input-lg" type="text" />
+                        <mat-error *ngIf="(modificarFarmaciaForm.controls.nombres.touched && modificarFarmaciaForm.controls.nombres.errors) ||
+                                (modificarFarmaciaForm.controls.nombres.errors && submitFarmacia)">
+                            <span *ngIf="modificarFarmaciaForm.controls.nombres.errors.required">Este campo es obligatorio.</span>
+                            <span *ngIf="modificarFarmaciaForm.controls.nombres.errors.maxLength">Este campo supera la cantidad de caracteres máximos (60).</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="apellidos">Apellidos</label>
+                        <input formControlName="apellidos" id="apellidos" placeholder="Ingrese sus apellidos" class="form-control input-underline input-lg" type="text" />
+                        <mat-error *ngIf="(modificarFarmaciaForm.controls.apellidos.touched && modificarFarmaciaForm.controls.apellidos.errors) ||
+                                (modificarFarmaciaForm.controls.apellidos.errors && submitFarmacia)">
+                            <span *ngIf="modificarFarmaciaForm.controls.apellidos.errors.required">Este campo es obligatorio.</span>
+                            <span *ngIf="modificarFarmaciaForm.controls.apellidos.errors.maxLength">Este campo supera la cantidad de caracteres máximos (60).</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="fecha_nacimiento">Fecha de Nacimiento</label>
+                        <input #fecha_nac_far (change)="modificarFarmaciaForm.controls.fecha_nacimiento.setValue(fecha_nac_far.value)" class="form-control input-underline input-lg" type="date" [value]="fecha_nac_far_val" />
+                        <input formControlName="fecha_nacimiento" [value]="fecha_nac_far.value" id="fecha_nacimiento" class="form-control input-underline input-lg" type="hidden" />
+                        <mat-error *ngIf="(modificarFarmaciaForm.controls.fecha_nacimiento.touched && modificarFarmaciaForm.controls.fecha_nacimiento.errors ) ||
+                                (modificarFarmaciaForm.controls.fecha_nacimiento.errors && submitFarmacia)">
+                            <span *ngIf="modificarFarmaciaForm.controls.fecha_nacimiento.errors.required">Este campo es obligatorio.</span>
+                            <span *ngIf="modificarFarmaciaForm.controls.fecha_nacimiento.errors.maxLength">Este campo supera la cantidad de caracteres máximos (12).</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="telefono">Teléfono</label>
+                        <input placeholder="Ingrese su número de teléfono" formControlName="telefono" id="telefono" class="form-control input-underline input-lg" type="text" />
+                        <mat-error *ngIf="(modificarFarmaciaForm.controls.telefono.touched && modificarFarmaciaForm.controls.telefono.errors) ||
+                                (modificarFarmaciaForm.controls.telefono.errors && submitFarmacia)">
+                            <span *ngIf="modificarFarmaciaForm.controls.telefono.errors.required">Este campo es obligatorio.</span>
+                            <span *ngIf="modificarFarmaciaForm.controls.telefono.errors.pattern">Este campo sólo acepta números y como máximo 8 dígitos.</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input formControlName="email" id="email" placeholder="Ingrese su correo electrónico" class="form-control input-underline input-lg" type="email" />
+                        <mat-error *ngIf="(modificarFarmaciaForm.controls.email.touched && modificarFarmaciaForm.controls.email.errors) ||
+                                (modificarFarmaciaForm.controls.email.errors && submitFarmacia)">
+                            <span *ngIf="modificarFarmaciaForm.controls.email.errors.required">Este campo es obligatorio.</span>
+                            <span *ngIf="modificarFarmaciaForm.controls.email.errors.email">Este campo es inválido.</span>
+                        </mat-error>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="username">Nombre de Usuario</label>
+                        <input formControlName="username" id="username" placeholder="Ingrese su nombre de usuario" class="form-control input-underline input-lg" type="text" />
+                        <mat-error *ngIf="(modificarFarmaciaForm.controls.username.touched && modificarFarmaciaForm.controls.username.errors) ||
+                                (modificarFarmaciaForm.controls.username.errors && submitFarmacia)">
+                            <span *ngIf="modificarFarmaciaForm.controls.username.errors.required">Este campo es obligatorio.</span>
+                            <span *ngIf="modificarFarmaciaForm.controls.username.errors.maxLength">Este campo supera la cantidad de caracteres máximos (12).</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="cargo">Cargo</label>
+                        <select formControlName="cargo" id="cargo" class="form-control input-underline input-lg">
+                            <option *ngFor="let cargo of cargosFarmacia" [value]="cargo">{{cargo}}</option>
+                        </select>
+                        <mat-error *ngIf="(modificarFarmaciaForm.controls.cargo.touched && modificarFarmaciaForm.controls.cargo.errors) ||
+                                (modificarFarmaciaForm.controls.cargo.errors && submitFarmacia)">
+                            <span *ngIf="modificarFarmaciaForm.controls.cargo.errors.required">Este campo es obligatorio.</span>
+                            <span *ngIf="modificarFarmaciaForm.controls.cargo.errors.maxLength">Este campo supera la cantidad de caracteres máximos (12).</span>
+                        </mat-error>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="modal.dismiss('Cross click')">Cerrar</button>
+        <button type="button" class="btn btn-primary" (click)="modificarFarmaciaSubmit()">Guardar Cambios</button>
+    </div>
+</ng-template>
+
+<ng-template #modMedico let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title" id="modalRecetaLabel">Modificar Médico</h5>
+        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close" (click)="modal.dismiss('Cross click')">&times;</button>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-12">
+                <form role="form" [formGroup]="modificarMedicoForm">
+                    <div class="form-group">
+                        <label for="run">RUN</label>
+                        <input placeholder="Ingrese su RUN sin puntos ni digito verificador"
+                            formControlName="run"
+                            id="run"
+                            class="form-control input-underline input-lg"
+                            type="text"/>
+                        <mat-error *ngIf="((modificarMedicoForm.controls.run.touched && modificarMedicoForm.controls.run.errors) || (modificarMedicoForm.controls.run.errors && submitMedico))">
+                            <span *ngIf="modificarMedicoForm.controls.run.errors.required"
+                                >Este campo es obligatorio.</span>
+                            <span *ngIf="modificarMedicoForm.controls.run.errors.pattern">Este campo sólo acepta números y, entre 7 y 8 dígitos.</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="nombres">Nombres</label>
+                        <input formControlName="nombres"
+                            id="nombres"
+                            placeholder="Ingrese su o sus nombres"
+                            class="form-control input-underline input-lg"
+                            type="text"/>
+                        <mat-error *ngIf="(modificarMedicoForm.controls.nombres.touched && modificarMedicoForm.controls.nombres.errors) ||
+                                (modificarMedicoForm.controls.nombres.errors && submitMedico)">
+                            <span *ngIf="modificarMedicoForm.controls.nombres.errors.required"
+                                >Este campo es obligatorio.</span>
+                            <span *ngIf="modificarMedicoForm.controls.nombres.errors.maxLength">Este campo supera la cantidad de caracteres máximos (60).</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="apellidos">Apellidos</label>
+                        <input formControlName="apellidos"
+                            id="apellidos"
+                            placeholder="Ingrese sus apellidos"
+                            class="form-control input-underline input-lg"
+                            type="text"/>
+                            <mat-error *ngIf="(modificarMedicoForm.controls.apellidos.touched && modificarMedicoForm.controls.apellidos.errors) ||
+                                (modificarMedicoForm.controls.apellidos.errors && submitMedico)">
+                            <span *ngIf="modificarMedicoForm.controls.apellidos.errors.required"
+                                >Este campo es obligatorio.</span>
+                            <span *ngIf="modificarMedicoForm.controls.apellidos.errors.maxLength">Este campo supera la cantidad de caracteres máximos (60).</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="fecha_nacimiento">Fecha de Nacimiento</label>
+                        <input #fecha_nac_med
+                            (change)="modificarMedicoForm.controls.fecha_nacimiento.setValue(fecha_nac_med.value)"
+                            class="form-control input-underline input-lg"
+                            [value]="fecha_nac_med_val"
+                            type="date"/>
+                        <input formControlName="fecha_nacimiento"
+                            [value]="fecha_nac_med.value"
+                            id="fecha_nacimiento"
+                            class="form-control input-underline input-lg"
+                            type="hidden"/>
+                        <mat-error *ngIf="(modificarMedicoForm.controls.fecha_nacimiento.touched && modificarMedicoForm.controls.fecha_nacimiento.errors ) ||
+                                (modificarMedicoForm.controls.fecha_nacimiento.errors && submitMedico)">
+                            <span *ngIf="modificarMedicoForm.controls.fecha_nacimiento.errors.required"
+                                >Este campo es obligatorio.</span>
+                            <span *ngIf="modificarMedicoForm.controls.fecha_nacimiento.errors.maxLength">Este campo supera la cantidad de caracteres máximos (12).</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="telefono">Teléfono</label>
+                        <input placeholder="Ingrese su número de teléfono"
+                            formControlName="telefono"
+                            id="telefono"
+                            class="form-control input-underline input-lg"
+                            type="text"/>
+                        <mat-error *ngIf="(modificarMedicoForm.controls.telefono.touched && modificarMedicoForm.controls.telefono.errors) ||
+                                (modificarMedicoForm.controls.telefono.errors && submitMedico)">
+                            <span *ngIf="modificarMedicoForm.controls.telefono.errors.required"
+                                >Este campo es obligatorio.</span>
+                            <span *ngIf="modificarMedicoForm.controls.telefono.errors.pattern">Este campo sólo acepta números y como máximo 8 dígitos.</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input formControlName="email"
+                            id="email"
+                            placeholder="Ingrese su correo electrónico"
+                            class="form-control input-underline input-lg"
+                            type="email"/>
+                        <mat-error *ngIf="(modificarMedicoForm.controls.email.touched && modificarMedicoForm.controls.email.errors) ||
+                                (modificarMedicoForm.controls.email.errors && submitMedico)">
+                            <span *ngIf="modificarMedicoForm.controls.email.errors.required"
+                                >Este campo es obligatorio.</span>
+                            <span *ngIf="modificarMedicoForm.controls.email.errors.email">Este campo es inválido.</span>
+                        </mat-error>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="username">Nombre de Usuario</label>
+                        <input formControlName="username"
+                            id="username"
+                            placeholder="Ingrese su nombre de usuario"
+                            class="form-control input-underline input-lg"
+                            type="text"/>
+                        <mat-error *ngIf="(modificarMedicoForm.controls.username.touched && modificarMedicoForm.controls.username.errors) ||
+                                (modificarMedicoForm.controls.username.errors && submitMedico)">
+                            <span *ngIf="modificarMedicoForm.controls.username.errors.required"
+                                >Este campo es obligatorio.</span>
+                            <span *ngIf="modificarMedicoForm.controls.username.errors.maxLength">Este campo supera la cantidad de caracteres máximos (12).</span>
+                        </mat-error>
+                    </div>
+                    <div class="form-group">
+                        <label for="especialidad">Especialidad</label>
+                        <select formControlName="especialidad"
+                            id="especialidad"
+                            class="form-control input-underline input-lg">
+                            <option *ngFor="let especialidad of especialidades" [value]="especialidad">{{especialidad}}</option>
+                        </select>
+                        <mat-error *ngIf="(modificarMedicoForm.controls.especialidad.touched && modificarMedicoForm.controls.especialidad.errors) ||
+                                (modificarMedicoForm.controls.especialidad.errors && submitMedico)">
+                            <span *ngIf="modificarMedicoForm.controls.especialidad.errors.required"
+                                >Este campo es obligatorio.</span>
+                            <span *ngIf="modificarMedicoForm.controls.especialidad.errors.maxLength">Este campo supera la cantidad de caracteres máximos (12).</span>
+                        </mat-error>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="modal.dismiss('Cross click')">Cerrar</button>
+        <button type="button" class="btn btn-primary" (click)="modificarMedicoSubmit()">Guardar Cambios</button>
+    </div>
+</ng-template>
+
+<ng-template #qrCard let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title" id="modalRecetaLabel">Tarjeta Paciente</h5>
+        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close" (click)="modal.dismiss('Cross click')">&times;</button>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-12">
+                <app-card-qr [usuario]="usuario"></app-card-qr>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="modal.dismiss('Cross click')">Cerrar</button>
+        <button type="button" class="btn btn-primary" (click)="printer()">Imprimir</button>
+    </div>
+</ng-template>
+
+

@@ -1,0 +1,166 @@
+<div [@routerTransition]>
+    <app-page-header [heading]="'Obtener Recetas del Paciente'" [icon]="'fa-edit'"></app-page-header>
+    <div class="row" *ngIf="paciente != null">
+        <div class="col">
+            <button class="btn btn-primary" (click)="buscarOtro()">Buscar Otro Paciente</button>
+        </div>
+    </div>
+    <div class="row" *ngIf="paciente == null">
+        <div class="col">
+            <button class="btn btn-primary" (click)="changeStateReader()">{{isReaderEnable ? 'Desactivar Lector':'Activar Lector'}}</button>
+        </div>
+    </div>
+    <br />
+    <div class="row" *ngIf="!isReaderEnable && paciente == null">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    <b>Buscar por RUN</b>
+                </div>
+                <div class="card-body">
+                    <form [formGroup]="buscar" (submit)="onSubmit()">
+                        <div class="form-group">
+                            <label for="run">RUN</label>
+                            <input placeholder="Ingrese su RUN sin puntos ni digito verificador" formControlName="run" id="run" class="form-control input-underline input-lg" type="text" />
+                            <mat-error *ngIf="((buscar.controls.run.touched && buscar.controls.run.errors) || (buscar.controls.run.errors && submit))">
+                                <span *ngIf="buscar.controls.run.errors.required">Este campo es obligatorio.</span>
+                                <span *ngIf="buscar.controls.run.errors.pattern">Este campo sólo acepta números y, entre 7 y 8 dígitos.</span>
+                            </mat-error>
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-primary form-control " type="submit">Buscar Paciente</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div *ngIf="hasError" class="alert alert-warning alert-dismissible" style="margin: 20px;" role="alert">
+                <h6 class="alert-heading">Ha ocurrido un problema!</h6>
+                <hr>
+                <p class="mb-0">{{infoError}}</p>
+
+                <button type="button" class="btn btn-warning" style="color: #faeecb; margin-top: 10px;" (click)="hasError = false;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+    <div *ngIf="success" class="alert alert-success alert-dismissible" role="alert">
+        <h6 class="alert-heading">Todo ha salido bien!</h6>
+        <hr>
+        <p class="mb-0">{{info}}</p>
+        <button type="button" class="btn btn-success" style="color: #d8f5df; margin-top: 10px;" (click)="success = false;">Cerrar</button>
+    </div>
+    <br/>
+    <app-lector-qr *ngIf="isReaderEnable" [scannerEnabled]="isReaderEnable" (usuarioId)="onRead($event)"></app-lector-qr>
+    <app-data-paciente *ngIf="paciente != null" [paciente]="paciente"></app-data-paciente>
+
+    <br *ngIf="paciente != null && recetas.length > 0" />
+    <div class="row" *ngIf="paciente != null && recetas.length > 0">
+        <div class="col">
+            <div class="card mb-3">
+                <div class="card-header">
+                    Recetas del Paciente
+                </div>
+                <div class="card-body table-responsive">
+                    <table datatable [dtOptions]="dtOptions" class="table table-striped table-bordered row-border hover" class="table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Prescripción</th>
+                                <th>Indicaciones</th>
+                                <th>Estado</th>
+                                <th>Médico</th>
+                                <th>Último Surtidor (Farmacéutico)</th>
+                                <th>Último Retiro</th>
+                                <th>Próximo Retiro</th>
+                                <th>Fecha de Prescripción</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let receta of recetas">
+                                <th scope="row">{{receta.id}}</th>
+                                <td>{{receta.prescripcion}}</td>
+                                <td>{{receta.indicaciones}}</td>
+                                <td>{{receta.estado}}</td>
+                                <td>Dr. {{receta.medico?.apellidos}}</td>
+                                <td>{{(receta.farmacia != null)? 'Farmacéutico ' + receta.farmacia?.apellidos : '-'}}</td>
+                                <td>{{(receta.ultima_fecha_surtido != null)? receta.ultima_fecha_surtido?.split('T')[0] : '-'}}</td>
+                                <td>{{(receta.proximo_retiro != null)? receta.proximo_retiro?.split('T')[0] : '-'}}</td>
+                                <td>{{receta.fecha_emision}}</td>
+                                <td>
+                                    <button *ngIf="currentUser.rol_id == ROL_FARMACIA && receta.estado == estados[0]" class="btn btn-primary" (click)="initSurtir(receta, content2)">Entregar Medicamento</button>
+                                    <button *ngIf="currentUser.rol_id == ROL_MEDICO || currentUser.rol_id == ROL_FARMACIA" class="btn btn-success" (click)="initModificarReceta(receta, content)">Cambiar Estado</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal -->
+<ng-template #content let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title" id="modalRecetaLabel">Cambiar Estado de Receta</h5>
+        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close" (click)="modal.dismiss('Cross click')">&times;</button>
+    </div>
+    <div class="modal-body">
+        <form [formGroup]="recetaForm">
+            <div class="form-group">
+                <label for="prescripcion">Prescripción</label>
+                <input placeholder="Ingrese el medicamento y la posología a prescribir" formControlName="prescripcion" id="prescripcion" class="form-control input-underline input-lg" readonly type="text" />
+                <mat-error *ngIf="((recetaForm.controls.prescripcion.touched && recetaForm.controls.prescripcion.errors) || (recetaForm.controls.prescripcion.errors && submitRegistro))">
+                    <span *ngIf="recetaForm.controls.prescripcion.errors.required">Este campo es obligatorio.</span>
+                </mat-error>
+            </div>
+            <div class="form-group">
+                <label for="indicaciones">Indicaciones</label>
+                <textarea placeholder="Decriba las indicaciones para el medicamento" formControlName="indicaciones" id="indicaciones" readonly class="form-control input-underline input-lg"></textarea>
+                <mat-error *ngIf="((recetaForm.controls.indicaciones.touched && recetaForm.controls.indicaciones.errors) || (recetaForm.controls.indicaciones.errors && submitRegistro))">
+                    <span *ngIf="recetaForm.controls.indicaciones.errors.required">Este campo es obligatorio.</span>
+                </mat-error>
+            </div>
+            <div class="form-group">
+                <label for="estado">Estado de la Prescripción</label>
+                <select formControlName="estado" id="estado" class="form-control input-underline input-lg">
+                    <option *ngFor="let est of estados" [value]="est">{{est}}</option>
+                </select>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="modal.dismiss('Cross click')">Cerrar</button>
+        <button type="button" class="btn btn-primary" (click)="onSubmitRegistro()">Guardar Cambios</button>
+    </div>
+</ng-template>
+
+<ng-template #content2 let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title" id="modalRecetaLabel">Entregar Medicamento de Receta</h5>
+        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close" (click)="modal.dismiss('Cross click')">&times;</button>
+    </div>
+    <div class="modal-body">
+        <p>¿Realmente desea surtir <b>{{currentReceta?.prescripcion}}</b>?</p>
+        <br/>
+        <p><b>Indicaciones: </b>{{currentReceta?.indicaciones}}</p>
+        <br/>
+        <form role="form" [formGroup]="surtirForm">
+            <div class="form-group">
+                <label for="proximo_retiro">Fecha de Próximo Retiro</label>
+                <input #proximo (change)="surtirForm.controls.proximo_retiro.setValue(proximo.value)" class="form-control input-underline input-lg" type="date" />
+                <input formControlName="proximo_retiro" [value]="proximo.value" id="proximo_retiro" class="form-control input-underline input-lg" type="hidden" />
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="modal.dismiss('Cross click')">Cerrar</button>
+        <button type="button" class="btn btn-primary" (click)="onSubmitSurtir()">Registar entrega de Receta</button>
+    </div>
+</ng-template>

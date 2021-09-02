@@ -1,0 +1,147 @@
+<div [@routerTransition]>
+    <app-page-header [heading]="'Registrar Cita a Paciente'" [icon]="'fa-edit'"></app-page-header>
+    <div class="row" *ngIf="paciente != null">
+        <div class="col">
+            <button class="btn btn-primary" (click)="buscarOtro()">Buscar Otro Paciente</button>
+        </div>
+    </div>
+    <div class="row" *ngIf="paciente == null">
+        <div class="col">
+            <button class="btn btn-primary" (click)="changeStateReader()">{{isReaderEnable ? 'Desactivar Lector':'Activar Lector'}}</button>
+        </div>
+    </div>
+    <br />
+    <div class="row" *ngIf="!isReaderEnable && paciente == null">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    <b>Buscar por RUN</b>
+                </div>
+                <div class="card-body">
+                    <form [formGroup]="buscar" (submit)="onSubmit()">
+                        <div class="form-group">
+                            <label for="run">RUN</label>
+                            <input placeholder="Ingrese su RUN sin puntos ni digito verificador" formControlName="run" id="run" class="form-control input-underline input-lg" type="text" />
+                            <mat-error *ngIf="((buscar.controls.run.touched && buscar.controls.run.errors) || (buscar.controls.run.errors && submit))">
+                                <span *ngIf="buscar.controls.run.errors.required">Este campo es obligatorio.</span>
+                                <span *ngIf="buscar.controls.run.errors.pattern">Este campo sólo acepta números y, entre 7 y 8 dígitos.</span>
+                            </mat-error>
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-primary form-control " type="submit">Buscar Paciente</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div *ngIf="hasError" class="alert alert-warning alert-dismissible" style="margin: 20px;" role="alert">
+                <h6 class="alert-heading">Ha ocurrido un problema!</h6>
+                <hr>
+                <p class="mb-0">{{infoError}}</p>
+
+                <button type="button" class="btn btn-warning" style="color: #faeecb; margin-top: 10px;" (click)="hasError = false;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+    <div *ngIf="success" class="alert alert-success alert-dismissible" role="alert">
+        <h6 class="alert-heading">Todo ha salido bien!</h6>
+        <hr>
+        <p class="mb-0">{{info}}</p>
+        <button type="button" class="btn btn-success" style="color: #d8f5df; margin-top: 10px;" (click)="success = false;">Cerrar</button>
+    </div>
+    <br/>
+    <app-lector-qr *ngIf="isReaderEnable" [scannerEnabled]="isReaderEnable" (usuarioId)="onRead($event)"></app-lector-qr>
+    <app-data-paciente *ngIf="paciente != null" [paciente]="paciente"></app-data-paciente>
+
+    <div class="row" *ngIf="paciente != null && !med_seleccionado">
+        <div class="col">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <b>Seleccionar Médico</b>
+                </div>
+                <div class="card-body table-responsive">
+                    <table datatable [dtOptions]="dtOptions" class="table table-striped table-bordered row-border hover" class="table">
+                        <thead>
+                            <tr>
+                                <th>RUN</th>
+                                <th>Nombres</th>
+                                <th>Apellidos</th>
+                                <th>Especialidad</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let medico of medicos">
+                                <th scope="row">{{medico.run}}</th>
+                                <td>{{medico.nombres}}</td>
+                                <td>{{medico.apellidos}}</td>
+                                <td>{{medico.especialidad}}</td>
+                                <td>
+                                    <button class="btn btn-primary" (click)="seleccionarMedico(medico)">Elegir</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" *ngIf="paciente!= null && med_seleccionado">
+        <div class="col-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <b>Médico Seleccionado</b>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><b>RUN:</b> {{medico.run}}</li>
+                    <li class="list-group-item"><b>Dr. {{medico.nombres + ' ' + medico.apellidos}}</b></li>
+                    <li class="list-group-item"><b>Especialidad:</b> {{medico.especialidad}}</li>
+                </ul>
+                <div class="card-footer" *ngIf="currentUser.rol_id == ROL_MESON">
+                    <button class="btn btn-secondary" (click)="elegirOtroMedico()">Elegir otro Médico</button>
+                </div>
+            </div>
+        </div>
+        <div class="col-8">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <b>Registrar Cita</b>
+                </div>
+                <div class="card-body">
+                    <form [formGroup]="citaForm">
+                        <div class="form-group">
+                            <label for="fecha">Fecha de Cita</label>
+                            <input #fecha (change)="citaForm.controls.fecha.setValue(fecha.value)" class="form-control input-underline input-lg" type="date" />
+                            <input formControlName="fecha" [value]="fecha.value" id="fecha" class="form-control input-underline input-lg" type="hidden" />
+                            <mat-error *ngIf="((citaForm.controls.fecha.touched && citaForm.controls.fecha.errors) || (citaForm.controls.fecha.errors && submitCita))">
+                                <span *ngIf="citaForm.controls.fecha.errors.required">Este campo es obligatorio.</span>
+                            </mat-error>
+                        </div>
+                        <div class="form-group">
+                            <label for="hora">Hora de Cita</label>
+                            <input #hora (change)="citaForm.controls.hora.setValue(hora.value)" class="form-control input-underline input-lg" type="time" />
+                            <input formControlName="hora" [value]="hora.value" id="hora" class="form-control input-underline input-lg" type="hidden" />
+                            <mat-error *ngIf="((citaForm.controls.hora.touched && citaForm.controls.hora.errors) || (citaForm.controls.hora.errors && submitCita))">
+                                <span *ngIf="citaForm.controls.hora.errors.required">Este campo es obligatorio.</span>
+                            </mat-error>
+                        </div>
+                        <div class="form-group">
+                            <label for="estado">Estado de la Cita</label>
+                            <select formControlName="estado" id="estado" class="form-control input-underline input-lg">
+                                <option *ngFor="let est of estados" [value]="est">{{est}}</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-primary" (click)="onSubmitCita()">Registrar Cita</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

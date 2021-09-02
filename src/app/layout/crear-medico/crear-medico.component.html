@@ -1,0 +1,164 @@
+<div [@routerTransition]>
+    <app-page-header [heading]="'Crear Usuario Médico'" [icon]="'fa-edit'"></app-page-header>
+
+    <div *ngIf="error" class="alert alert-warning alert-dismissible" role="alert">
+        <h6 class="alert-heading">Ha ocurrido un problema!</h6>
+        <hr>
+        <p class="mb-0">{{info}}</p>
+        <ul *ngIf="errores != null" >
+            <li *ngFor="let key of objectKeys(errores)"><b>{{key}}</b>
+                <ul *ngIf="errores[key].length > 0">
+                    <li *ngFor="let item of errores[key]">{{item}}</li>
+                </ul>
+            </li>
+        </ul>
+        <button type="button" class="btn btn-warning" style="color: #faeecb; margin-top: 10px;" (click)="error = false;">Cerrar</button>
+    </div>
+
+    <div *ngIf="success" class="alert alert-success alert-dismissible" role="alert">
+        <h6 class="alert-heading">Todo ha salido bien!</h6>
+        <hr>
+        <p class="mb-0">{{info}}</p>
+        <button type="button" class="btn btn-success" style="color: #d8f5df; margin-top: 10px;" (click)="success = false;">Cerrar</button>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            Crear Usuario Médico
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-12">
+                    <form role="form" [formGroup]="registerForm">
+                        <div class="form-group">
+                            <label for="run">RUN</label>
+                            <input placeholder="Ingrese su RUN sin puntos ni digito verificador"
+                                formControlName="run"
+                                id="run"
+                                class="form-control input-underline input-lg"
+                                type="text"/>
+                            <mat-error *ngIf="((registerForm.controls.run.touched && registerForm.controls.run.errors) || (registerForm.controls.run.errors && submit))">
+                                <span *ngIf="registerForm.controls.run.errors.required"
+                                    >Este campo es obligatorio.</span>
+                                <span *ngIf="registerForm.controls.run.errors.pattern">Este campo sólo acepta números y, entre 7 y 8 dígitos.</span>
+                            </mat-error>
+                        </div>
+                        <div class="form-group">
+                            <label for="nombres">Nombres</label>
+                            <input formControlName="nombres"
+                                id="nombres"
+                                placeholder="Ingrese su o sus nombres"
+                                class="form-control input-underline input-lg"
+                                type="text"/>
+                            <mat-error *ngIf="(registerForm.controls.nombres.touched && registerForm.controls.nombres.errors) ||
+                                    (registerForm.controls.nombres.errors && submit)">
+                                <span *ngIf="registerForm.controls.nombres.errors.required"
+                                    >Este campo es obligatorio.</span>
+                                <span *ngIf="registerForm.controls.nombres.errors.maxLength">Este campo supera la cantidad de caracteres máximos (60).</span>
+                            </mat-error>
+                        </div>
+                        <div class="form-group">
+                            <label for="apellidos">Apellidos</label>
+                            <input formControlName="apellidos"
+                                id="apellidos"
+                                placeholder="Ingrese sus apellidos"
+                                class="form-control input-underline input-lg"
+                                type="text"/>
+                                <mat-error *ngIf="(registerForm.controls.apellidos.touched && registerForm.controls.apellidos.errors) ||
+                                    (registerForm.controls.apellidos.errors && submit)">
+                                <span *ngIf="registerForm.controls.apellidos.errors.required"
+                                    >Este campo es obligatorio.</span>
+                                <span *ngIf="registerForm.controls.apellidos.errors.maxLength">Este campo supera la cantidad de caracteres máximos (60).</span>
+                            </mat-error>
+                        </div>
+                        <div class="form-group">
+                            <label for="fecha_nacimiento">Fecha de Nacimiento</label>
+                            <input #fecha_nac
+                                (change)="registerForm.controls.fecha_nacimiento.setValue(fecha_nac.value)"
+                                class="form-control input-underline input-lg"
+                                type="date"/>
+                            <input formControlName="fecha_nacimiento"
+                                [value]="fecha_nac.value"
+                                id="fecha_nacimiento"
+                                class="form-control input-underline input-lg"
+                                type="hidden"/>
+                            <mat-error *ngIf="(registerForm.controls.fecha_nacimiento.touched && registerForm.controls.fecha_nacimiento.errors ) ||
+                                    (registerForm.controls.fecha_nacimiento.errors && submit)">
+                                <span *ngIf="registerForm.controls.fecha_nacimiento.errors.required"
+                                    >Este campo es obligatorio.</span>
+                                <span *ngIf="registerForm.controls.fecha_nacimiento.errors.maxLength">Este campo supera la cantidad de caracteres máximos (12).</span>
+                            </mat-error>
+                        </div>
+                        <div class="form-group">
+                            <label for="telefono">Teléfono</label>
+                            <input placeholder="Ingrese su número de teléfono"
+                                formControlName="telefono"
+                                id="telefono"
+                                class="form-control input-underline input-lg"
+                                type="text"/>
+                            <mat-error *ngIf="(registerForm.controls.telefono.touched && registerForm.controls.telefono.errors) ||
+                                    (registerForm.controls.telefono.errors && submit)">
+                                <span *ngIf="registerForm.controls.telefono.errors.required"
+                                    >Este campo es obligatorio.</span>
+                                <span *ngIf="registerForm.controls.telefono.errors.pattern">Este campo sólo acepta números y como máximo 8 dígitos.</span>
+                            </mat-error>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input formControlName="email"
+                                id="email"
+                                placeholder="Ingrese su correo electrónico"
+                                class="form-control input-underline input-lg"
+                                type="email"/>
+                            <mat-error *ngIf="(registerForm.controls.email.touched && registerForm.controls.email.errors) ||
+                                    (registerForm.controls.email.errors && submit)">
+                                <span *ngIf="registerForm.controls.email.errors.required"
+                                    >Este campo es obligatorio.</span>
+                                <span *ngIf="registerForm.controls.email.errors.email">Este campo es inválido.</span>
+                            </mat-error>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="username">Nombre de Usuario</label>
+                            <input formControlName="username"
+                                id="username"
+                                placeholder="Ingrese su nombre de usuario"
+                                class="form-control input-underline input-lg"
+                                type="text"/>
+                            <mat-error *ngIf="(registerForm.controls.username.touched && registerForm.controls.username.errors) ||
+                                    (registerForm.controls.username.errors && submit)">
+                                <span *ngIf="registerForm.controls.username.errors.required"
+                                    >Este campo es obligatorio.</span>
+                                <span *ngIf="registerForm.controls.username.errors.maxLength">Este campo supera la cantidad de caracteres máximos (12).</span>
+                            </mat-error>
+                        </div>
+                        <div class="form-group">
+                            <label for="especialidad">Especialidad</label>
+                            <select formControlName="especialidad"
+                                id="especialidad"
+                                class="form-control input-underline input-lg">
+                                <option *ngFor="let especialidad of especialidades" [value]="especialidad">{{especialidad}}</option>
+                            </select>
+                            <mat-error *ngIf="(registerForm.controls.especialidad.touched && registerForm.controls.especialidad.errors) ||
+                                    (registerForm.controls.especialidad.errors && submit)">
+                                <span *ngIf="registerForm.controls.especialidad.errors.required"
+                                    >Este campo es obligatorio.</span>
+                                <span *ngIf="registerForm.controls.especialidad.errors.maxLength">Este campo supera la cantidad de caracteres máximos (12).</span>
+                            </mat-error>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <div class="row">
+                <div class="col-lg-3 col-md-4 col-sm-6">
+                    <button type="button" (click)="reset()" class="btn btn-secondary">Limpiar Formulario</button>
+                </div>
+                <div class="col-lg-3 col-md-4 col-sm-6">
+                    <button type="button" (click)="submitForm()" class="btn btn-primary">Registrar Usuario Médico</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

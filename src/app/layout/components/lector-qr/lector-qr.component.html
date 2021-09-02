@@ -1,0 +1,12 @@
+<div class="row" style="margin: 10px;">
+    <div class="col-4"></div>
+    <div class="col-4">
+        <zxing-scanner #scanner
+            *ngIf="scannerEnabled"
+            [enable]="scannerEnabled"
+            (scanSuccess)="scan($event)"
+            [formats]="allowedFormats">
+        </zxing-scanner>
+    </div>
+    <div class="col-4"></div>
+</div>
